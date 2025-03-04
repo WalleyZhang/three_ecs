@@ -1,0 +1,27 @@
+{
+  "name": "three_ecs",
+  "version": "1.0.0",
+  "description": "entity component system framework",
+  "main": "index.js",
+  "scripts": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/WalleyZhang/three_ecs.git"
+  },
+  "keywords": [
+    "ecs"
+  ],
+  "author": "WalleyZhang",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/WalleyZhang/three_ecs/issues"
+  },
+  "homepage": "https://github.com/WalleyZhang/three_ecs#readme",
+  "dependencies": {
+    "three": "^0.174.0",
+    "typescript": "^5.8.2"
+  },
+  "devDependencies": {
+    "@types/three": "^0.174.0"
+  }
+}
