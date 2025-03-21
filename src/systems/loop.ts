@@ -1,4 +1,4 @@
-import { type Camera, Clock, type Scene, type WebGLRenderer } from 'three';
+import { type Camera, Clock, type Scene, type WebGLRenderer } from "three";
 
 interface Updatable {
   update: (deltaTime: number) => void;
