@@ -1,4 +1,5 @@
 import { type Camera, Clock, type Scene, type WebGLRenderer } from "three";
+import { System } from "../core/ecs";
 
 interface Updatable {
   update: (deltaTime: number) => void;
@@ -9,8 +10,21 @@ const clock = new Clock();
 /**
  * 循环系统，管理每一帧中需要更新的对象
  */
-class Loop {
-  public constructor(scene: Scene, camera: Camera, renderer: WebGLRenderer) {
+class Loop extends System {
+  private scene: Scene;
+  private camera: Camera;
+  private renderer: WebGLRenderer;
+  /**
+   * 更新列表，用于更新一些需要在渲染器渲染之前更新的对象
+   */
+  private updatables: Updatable[];
+  /**
+   * 延迟更新列表，用于更新一些需要在渲染器渲染之后更新的对象
+   */
+  private lateUpdatables: Updatable[];
+
+  /** 系统初始化 */
+  public init(scene: Scene, camera: Camera, renderer: WebGLRenderer) {
     this.scene = scene;
     this.camera = camera;
     this.renderer = renderer;
@@ -18,18 +32,6 @@ class Loop {
     this.lateUpdatables = [];
     this.renderer.autoClear = false;
   }
-
-  private readonly scene: Scene;
-  private readonly camera: Camera;
-  private readonly renderer: WebGLRenderer;
-  /**
-   * 更新列表，用于更新一些需要在渲染器渲染之前更新的对象
-   */
-  public updatables: Updatable[];
-  /**
-   * 延迟更新列表，用于更新一些需要在渲染器渲染之后更新的对象
-   */
-  public lateUpdatables: Updatable[];
 
   /**
    * 启动渲染循环

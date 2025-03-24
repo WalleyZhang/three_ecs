@@ -3,20 +3,18 @@ import {
   ComponentConstructor,
   Entity,
   EntityConstructor,
-} from "./ecs";
+} from "../ecs";
 
 /** 缓存池：单例模式 */
 export class Pool {
   // 静态实例
   private static instance: Pool | undefined;
 
-  private eId: number;
   private componentPool: Map<string, Component[]>;
   private entityPool: Map<string, Entity[]>;
 
   // 私有构造函数，防止外部实例化
   private constructor() {
-    this.eId = 0;
     this.componentPool = new Map();
     this.entityPool = new Map();
   }
@@ -34,7 +32,6 @@ export class Pool {
     let entity = this.entityPool.get(ec.EntityName)?.shift() as T | undefined;
     if (!entity) {
       entity = new ec();
-      entity.id = this.eId++;
     }
     entity.destroyed = false;
     return entity;

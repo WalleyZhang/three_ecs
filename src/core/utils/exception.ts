@@ -1,0 +1,13 @@
+export class AlreadyExistsError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "AlreadyExistsError";
+  }
+}
+
+export class EmptyError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "EmptyError";
+  }
+}
