@@ -99,7 +99,7 @@ export abstract class Entity extends Data {
 //#region System
 /** 系统：处理实体上的组件 */
 export abstract class System {
-  /** 系统优先级（0-4 物理-逻辑-动画-渲染）：越小越先更新，同级更新顺序不定 */
+  /** 系统优先级（0-4 数据-物理-逻辑-动画-渲染）：越小越先更新，同级更新顺序不定 */
   public abstract layer: number;
 
   /** 系统启动 */

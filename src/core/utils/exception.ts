@@ -11,3 +11,10 @@ export class EmptyError extends Error {
     this.name = "EmptyError";
   }
 }
+
+export class NotFoundError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "NotFoundError";
+  }
+}
