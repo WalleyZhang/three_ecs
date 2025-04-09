@@ -1,12 +1,31 @@
-/** 框架出入口，设计目的是将耦合度集中到此类 */
-export class World {
-  /** 启动引擎 */
-  public Start(): void {}
-  /** 暂停引擎 */
-  public Pause(): void {}
+import { EntitiesManager } from "./core/managers/entitiesManager";
+import { SystemsManager } from "./core/managers/systemsManager";
+import { ThreeManager } from "./core/managers/threeManager";
 
-  /** 更新 */
-  public Update(deltaTime: number): void {}
-  /** 延迟更新， Update 之后调用  */
-  public LateUpdate(deltaTime: number): void {}
+export class World {
+  private container: HTMLElement;
+  private managers: {
+    em: EntitiesManager,
+    sm: SystemsManager,
+    tm: ThreeManager
+  }
+  public constructor(container: HTMLElement) {
+    this.container = container;
+
+    this.managers = {
+      em: EntitiesManager.GetInstance(),
+      sm: SystemsManager.GetInstance(),
+      tm: ThreeManager.GetInstance()
+    }
+    this.managers.tm.Container = this.container;
+  }
+
+  public init() {
+
+  }
+
+  /** 开启场景大小自适应容器大小 */
+  public autoResize(autoResize: boolean): void {
+    this.managers.tm.AutoResize = autoResize;
+  }
 }

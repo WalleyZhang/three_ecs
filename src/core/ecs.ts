@@ -15,7 +15,7 @@ abstract class Data {
 
 //#region Component
 export interface ComponentConstructor<T extends Component> {
-  new (...args: any[]): T;
+  new(...args: any[]): T;
   CompName: string;
 }
 /** 组件：只包含数据，不包含逻辑 */
@@ -31,7 +31,7 @@ export abstract class Component extends Data {
 
 //#region Entity
 export interface EntityConstructor<T extends Entity> {
-  new (...args: any[]): T;
+  new(...args: any[]): T;
   EntityName: string;
 }
 /** 实体：容纳组件的容器 */

@@ -20,7 +20,7 @@ export class SystemsManager extends System {
     super();
   }
 
-  static GetInstance(): SystemsManager {
+  public static GetInstance(): SystemsManager {
     if (!SystemsManager.instance) {
       SystemsManager.instance = new SystemsManager();
     }
