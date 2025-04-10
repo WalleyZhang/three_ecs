@@ -1,3 +1,4 @@
+import { EntitiesManager } from "../managers/entitiesManager";
 import { EventType, internalEvents, PayloadTypes } from "./utils/event";
 import { AlreadyExistsError } from "./utils/exception";
 
@@ -30,19 +31,15 @@ export abstract class Component extends Data {
 //#endregion
 
 //#region Entity
-export interface EntityConstructor<T extends Entity> {
-  new(...args: any[]): T;
-  EntityName: string;
-}
 /** 实体：容纳组件的容器 */
-export abstract class Entity extends Data {
-  /** 实体名称，默认为"Entity"，需要确保唯一 */
-  public static EntityName: string = "Entity";
+export class Entity extends Data {
+
   private static id = 1;
 
-  /** 实体的唯一ID，未指定时默认为-1 */
+  /** 实体的唯一ID */
   public readonly id: number;
-
+  /** 实体名称 */
+  public name: string = "Entity";
   /** 实体上的组件 */
   public components: Map<string, Component> = new Map();
 
@@ -99,12 +96,20 @@ export abstract class Entity extends Data {
 //#region System
 /** 系统：处理实体上的组件 */
 export abstract class System {
+
   /** 系统优先级（0-4 数据-物理-逻辑-动画-渲染）：越小越先更新，同级更新顺序不定 */
   public abstract layer: number;
 
+  /** 实体管理器实例，用于获取实体 */
+  protected entitiesM: EntitiesManager;
+
+  public constructor() {
+    this.entitiesM = EntitiesManager.GetInstance();
+  }
+
   /** 系统启动 */
   public abstract Start(): void;
-  /** 系统更新 */
+  /** 系统更新：帧间隔以 ms 为单位 */
   public abstract Update(delta: number): void;
   /** 系统延迟更新：在Update之后，用于处理有依赖的更新 */
   public abstract LatedUpdate(delta: number): void;

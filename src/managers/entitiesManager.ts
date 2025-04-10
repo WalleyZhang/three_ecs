@@ -2,11 +2,9 @@ import {
   Component,
   ComponentConstructor,
   Entity,
-  EntityConstructor,
-} from "../ecs";
-import { Pool } from "../utils/pool";
-import { EventType, internalEvents, PayloadTypes } from "../utils/event";
-import { EmptyError } from "../utils/exception";
+} from "../core/ecs";
+import { EventType, internalEvents, PayloadTypes } from "../core/utils/event";
+import { EmptyError } from "../core/utils/exception";
 
 /**
  * 管理所有实体的单例
@@ -18,12 +16,9 @@ export class EntitiesManager {
   /**固定的组件索引：用于快速定位拥有某个组件的实体*/
   private componentIndex: Map<string, Set<Entity>>;
 
-  private pool: Pool;
-
   private constructor() {
     this.entities = [];
     this.componentIndex = new Map();
-    this.pool = Pool.GetInstance();
     internalEvents.on(
       EventType.ENTITY_COMPONENT_ADDED,
       this.addComponentHandler
@@ -38,8 +33,7 @@ export class EntitiesManager {
   }
 
   /** 添加实体的唯一入口 */
-  public addEntity<T extends Entity>(ec: EntityConstructor<T>): T {
-    const entity = this.pool.getEntity(ec);
+  public addEntity(entity: Entity): Entity {
     this.entities[entity.id] = entity;
     // 记录组件索引，方便快速查询拥有某个组件的实体
     for (const component of entity.components) {
@@ -69,8 +63,7 @@ export class EntitiesManager {
       }
       // 再从实体数组中删除
       this.entities[entity.id] = undefined;
-      // 最后回收到 Pool
-      this.pool.releaseEntity(entity);
+
       return true;
     }
     return false;

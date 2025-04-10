@@ -1,11 +1,11 @@
-import { System } from "../ecs";
-import { AlreadyExistsError, NotFoundError } from "../utils/exception";
+import { System } from "../core/ecs";
+import { AlreadyExistsError, NotFoundError } from "../core/utils/exception";
 
 /**
  * 系统管理器，负责管理所有系统的单例
  * 设计目标：将系统相关的耦合度尽量集中到此
  */
-export class SystemsManager extends System {
+export class SystemsManager {
   private static instance: SystemsManager;
 
   public layer: number = -1;
@@ -17,7 +17,7 @@ export class SystemsManager extends System {
   private systems: Map<number, System[]> = new Map();
 
   private constructor() {
-    super();
+
   }
 
   public static GetInstance(): SystemsManager {
@@ -32,12 +32,10 @@ export class SystemsManager extends System {
    * @param system 系统实例
    */
   public registerSystem(system: System) {
-    this.systems.get(system.layer) || this.systems.set(system.layer, []);
-    const layerSystems = this.systems.get(system.layer)!;
+    const layerSystems = this.systems.get(system.layer) || this.systems.set(system.layer, []).get(system.layer)!;
+    // 系统都应该是单例模式，所以这里忽略重复的注册请求
     if (layerSystems.includes(system)) {
-      throw new AlreadyExistsError(
-        `[SystemsManager] System ${system.constructor.name} already exists in layer ${system.layer}`
-      );
+      return
     }
 
     system.Start();

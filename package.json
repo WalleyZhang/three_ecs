@@ -4,7 +4,8 @@
   "description": "entity component system framework",
   "main": "index.js",
   "scripts": {
-    "test": "jest"
+    "test": "jest",
+    "example": "pnpm --dir ./engine_example dev"
   },
   "repository": {
     "type": "git",
