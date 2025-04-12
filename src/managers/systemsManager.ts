@@ -1,5 +1,5 @@
-import { System } from "../core/ecs";
-import { AlreadyExistsError, NotFoundError } from "../core/utils/exception";
+import { System } from "../core";
+import { NotFoundError } from "../types/exception";
 
 /**
  * 系统管理器，负责管理所有系统的单例

@@ -1,6 +1,5 @@
-import { System } from "@engine/core/ecs";
-import { TransformComponent } from "@engine/baseComponents/transformComponent"
-import { VelocityComponent } from "../components/velocityComponent";
+import { System } from "../../core";
+import { TransformComponent, VelocityComponent } from "../index"
 
 
 /** 控制模型的移动 */

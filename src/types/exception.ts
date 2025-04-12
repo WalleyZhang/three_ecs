@@ -1,3 +1,7 @@
+/**
+ * 自定义的错误类型
+ */
+
 export class AlreadyExistsError extends Error {
   constructor(message: string) {
     super(message);

@@ -1,4 +1,4 @@
-import { Component } from "@engine/core/ecs";
+import { Component } from "../../core";
 
 /** 速度组件 */
 export class VelocityComponent extends Component {

@@ -2,9 +2,10 @@ import {
   Component,
   ComponentConstructor,
   Entity,
-} from "../core/ecs";
-import { EventType, internalEvents, PayloadTypes } from "../core/utils/event";
-import { EmptyError } from "../core/utils/exception";
+} from "../core";
+import { EmptyError } from "../types/exception";
+import { InternalEvent, InternalEventPayload } from "../types/internalEventMap";
+import { EventManager } from "./eventManager";
 
 /**
  * 管理所有实体的单例
@@ -19,8 +20,8 @@ export class EntitiesManager {
   private constructor() {
     this.entities = [];
     this.componentIndex = new Map();
-    internalEvents.on(
-      EventType.ENTITY_COMPONENT_ADDED,
+    EventManager.GetInstance().addEventListener(
+      InternalEvent.ENTITY_COMPONENT_ADDED,
       this.addComponentHandler
     );
   }
@@ -99,7 +100,7 @@ export class EntitiesManager {
   }
 
   /** 实体新增组件处理器：箭头函数确保 this 指向正确 */
-  private addComponentHandler = (payload: PayloadTypes.AddComponent) => {
+  private addComponentHandler = (payload: InternalEventPayload[InternalEvent.ENTITY_COMPONENT_ADDED]) => {
     const { entity, compNames } = payload;
     for (const compName of compNames) {
       const index = this.componentIndex.get(compName) || new Set();

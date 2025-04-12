@@ -1,4 +1,6 @@
-import { AmbientLight, Camera, Color, Mesh, PerspectiveCamera, Scene, WebGLRenderer } from "three";
+import { AmbientLight, Camera, Object3D, PerspectiveCamera, Scene, WebGLRenderer } from "three";
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
+import Stats from 'three/examples/jsm/libs/stats.module.js';
 import { SystemsManager } from "./systemsManager";
 
 /** 
@@ -25,6 +27,7 @@ export class ThreeManager {
     }
     this.resizeHandler();
   }
+
   /** 场景所在的容器 */
   public set Container(container: HTMLElement) {
     this.container = container;
@@ -39,30 +42,19 @@ export class ThreeManager {
   private renderer: WebGLRenderer;
   private scene: Scene;
   private camera: Camera;
+  private controls: OrbitControls;
+
   private constructor() {
     this.scene = new Scene();
-
-    this.scene.background = new Color('floralwhite');
-
-    // ✅ 添加环境光（基础全局亮度）
-    const ambientLight = new AmbientLight(0xffffff, 0.5);
-    this.scene.add(ambientLight);
-
-    // 默认使用透视相机
-    this.camera = new PerspectiveCamera(
-      35,
-      1,
-      1,
-      50000
-    );
-    this.camera.up.set(0, 0, 1);
-    this.camera.position.set(0, 0, 15);
-    this.camera.lookAt(0, 0, 0);
-
     // 默认不启用抗锯齿，以提高性能
     this.renderer = new WebGLRenderer();
-  }
+    this.camera = this.createCamera();
+    this.controls = this.createOrbitControls(this.camera, this.renderer.domElement);
 
+    // 环境光
+    const ambientLight = new AmbientLight(0xffffff, 0.5);
+    this.scene.add(ambientLight);
+  }
 
   /** 设置（启动） three 中的动画循环 */
   public setAnimationLoop() {
@@ -86,9 +78,9 @@ export class ThreeManager {
   }
 
   /** 模型添加到场景中 */
-  public appendToScene(mesh: Mesh) {
-    if (mesh.parent !== this.scene) {
-      this.scene.add(mesh);
+  public appendToScene(obj: Object3D) {
+    if (obj.parent !== this.scene) {
+      this.scene.add(obj);
     }
   }
 
@@ -101,5 +93,28 @@ export class ThreeManager {
       this.camera.aspect = container.clientWidth / container.clientHeight;
       this.camera.updateProjectionMatrix();
     }
+  }
+
+  /** 相机初始化 */
+  private createCamera(): Camera {
+    if (this.camera) return this.camera;
+    const camera = new PerspectiveCamera(
+      35,
+      1,
+      1,
+      50000
+    );
+    camera.up.set(0, 0, 1);
+    camera.position.set(0, 0, 15);
+    return camera;
+  }
+
+  /** 相机控制器初始化 */
+  private createOrbitControls(camera: Camera, canvas: HTMLElement): OrbitControls {
+    if (this.controls) return this.controls;
+    const controls = new OrbitControls(camera, canvas);
+    controls.rotateSpeed = 0.75;
+    controls.target.set(0, 0, 0)
+    return controls;
   }
 }

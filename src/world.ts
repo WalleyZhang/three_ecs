@@ -1,42 +1,56 @@
-import { BaseEntity } from "./baseEntities/baseEntity";
-import { EntitiesManager } from "./managers/entitiesManager";
-import { SystemsManager } from "./managers/systemsManager";
-import { ThreeManager } from "./managers/threeManager";
+import { MoveSystem, VisibleEntity } from "./base";
+import { EventSystem } from "./base/baseSystems/eventSystem";
+import { EntitiesManager, EventManager, StateManager, SystemsManager, ThreeManager } from "./managers";
 
 /** 引擎与外部的结合点 */
 export class World {
+
+  public get systemsManager(): SystemsManager { return this.managers.systemM }
+  public get eventManager(): EventManager { return this.managers.eventM }
+
   private container: HTMLElement;
   private managers: {
-    em: EntitiesManager,
-    sm: SystemsManager,
-    tm: ThreeManager
+    entitiesM: EntitiesManager,
+    systemM: SystemsManager,
+    threeM: ThreeManager,
+    eventM: EventManager,
+    stateM: StateManager
   }
   public constructor(container: HTMLElement) {
     this.container = container;
 
     this.managers = {
-      em: EntitiesManager.GetInstance(),
-      sm: SystemsManager.GetInstance(),
-      tm: ThreeManager.GetInstance()
+      entitiesM: EntitiesManager.GetInstance(),
+      systemM: SystemsManager.GetInstance(),
+      threeM: ThreeManager.GetInstance(),
+      eventM: EventManager.GetInstance(),
+      stateM: StateManager.GetInstance()
     }
-    this.managers.tm.Container = this.container;
+    this.managers.threeM.Container = this.container;
   }
 
   public start() {
     // 开启场景大小自适应容器大小
-    this.managers.tm.AutoResize = true;
+    this.managers.threeM.AutoResize = true;
     // 启动three的循环渲染
-    this.managers.tm.setAnimationLoop()
+    this.managers.threeM.setAnimationLoop()
+
+    // 内置的系统注册
+    this.managers.systemM.registerSystem(MoveSystem.GetInstance())
+    this.managers.systemM.registerSystem(EventSystem.GetInstance())
   }
 
   public stop() {
     // 停止three的循环渲染
-    this.managers.tm.unsetAnimationLoop()
+    this.managers.threeM.unsetAnimationLoop()
   }
 
-  /** 创建一个空的实体 */
-  public createEntity(): BaseEntity {
-    return this.managers.em.addEntity(new BaseEntity()) as BaseEntity;
+  /** 创建一个场景中可见的实体 */
+  public createVisibleEntity(): VisibleEntity {
+    const ve = new VisibleEntity();
+    this.managers.entitiesM.addEntity(ve);
+    this.managers.threeM.appendToScene(ve.modelComponent.model);
+    return ve
   }
 
 }

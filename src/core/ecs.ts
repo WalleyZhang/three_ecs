@@ -1,6 +1,6 @@
-import { EntitiesManager } from "../managers/entitiesManager";
-import { EventType, internalEvents, PayloadTypes } from "./utils/event";
-import { AlreadyExistsError } from "./utils/exception";
+import { EntitiesManager, EventManager } from "../managers";
+import { AlreadyExistsError } from "../types/exception";
+import { InternalEventPayload, InternalEvent } from "../types/internalEventMap";
 
 abstract class Data {
   /** 数据是否被销毁 */
@@ -35,6 +35,7 @@ export abstract class Component extends Data {
 export class Entity extends Data {
 
   private static id = 1;
+  private static eventM: EventManager | undefined;
 
   /** 实体的唯一ID */
   public readonly id: number;
@@ -48,6 +49,9 @@ export class Entity extends Data {
   public constructor() {
     super();
     this.id = Entity.id++;
+    if (!Entity.eventM) {
+      Entity.eventM = EventManager.GetInstance();
+    }
   }
 
   /** 添加组件到此实体：参数只接收数组，批量添加组件以提高效率 */
@@ -56,8 +60,9 @@ export class Entity extends Data {
     for (const component of components) {
       compNames.push(this.addComponent(component));
     }
-    internalEvents.emit<PayloadTypes.AddComponent>(
-      EventType.ENTITY_COMPONENT_ADDED,
+
+    Entity.eventM!.dispatch<InternalEventPayload[InternalEvent.ENTITY_COMPONENT_ADDED]>(
+      InternalEvent.ENTITY_COMPONENT_ADDED,
       {
         entity: this,
         components: components,
@@ -109,9 +114,9 @@ export abstract class System {
 
   /** 系统启动 */
   public abstract Start(): void;
-  /** 系统更新：帧间隔以 ms 为单位 */
+  /** 系统更新：每一帧的渲染帧之前执行 */
   public abstract Update(delta: number): void;
-  /** 系统延迟更新：在Update之后，用于处理有依赖的更新 */
+  /** 系统延迟更新：每一帧的渲染帧之后执行 */
   public abstract LatedUpdate(delta: number): void;
   /** 系统暂停 */
   public abstract Pause(): void;

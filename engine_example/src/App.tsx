@@ -1,49 +1,49 @@
 import { useCallback, useEffect, useRef } from 'react'
 import { World } from '@engine/world'
-import { BoxGeometry, MeshBasicMaterial } from 'three'
-import { VelocityComponent } from './components/velocityComponent'
-import { MoveSystem } from './systems/moveSystem'
-import { SystemsManager } from '@engine/managers/systemsManager'
+import { BoxGeometry, Mesh, MeshBasicMaterial } from 'three'
+import { VelocityComponent } from '@engine/base'
+import { ExternalEvent, ExternalEventPayload } from '@engine/types/externalEventMap'
 
 function App() {
   const worldRef = useRef<World>(null)
   const containerRef = useRef<HTMLDivElement>(null)
 
   // 用于记录静态立方体当前的位置
-  const staticBoxPos = useRef({ x: -4, y: -8 })
+  const staticBoxPos = useRef({ x: -8, y: -2 })
 
   // 添加静态立方体，每次位置 x+0.1, y+0.2
   const addStaticBox = useCallback(() => {
     if (worldRef.current) {
       const { x, y } = staticBoxPos.current
-      const entity = worldRef.current.createEntity()
-      entity.meshComponent.mesh.geometry = new BoxGeometry(0.5, 0.5, 0.5)
-      entity.meshComponent.mesh.material = new MeshBasicMaterial({ color: 0x0000ff })
+      const entity = worldRef.current.createVisibleEntity()
+      const mesh = new Mesh(new BoxGeometry(0.2, 0.2, 0.2), new MeshBasicMaterial({ color: 0x0000ff }))
+      entity.modelComponent.model.add(mesh)
       entity.transformComponent.position.set(x, y, 0)
 
       // 位置更新
-      staticBoxPos.current.x += 0.1
-      staticBoxPos.current.y += 0.2
+      staticBoxPos.current.x += 0.4
     }
   }, [])
 
   // 添加运动立方体
   const addMoveBox = useCallback(() => {
     if (worldRef.current) {
-      const { x } = staticBoxPos.current
-      const entity = worldRef.current.createEntity()
-      entity.meshComponent.mesh.geometry = new BoxGeometry(0.5, 0.5, 0.5)
-      entity.meshComponent.mesh.material = new MeshBasicMaterial({ color: 0x00ff00 })
-      entity.transformComponent.position.set(x, 0, 0)
+      const entity = worldRef.current.createVisibleEntity()
+      const mesh = new Mesh(new BoxGeometry(0.2, 0.2, 0.2), new MeshBasicMaterial({ color: 0x00ff00 }))
+      entity.modelComponent.model.add(mesh)
+      entity.transformComponent.position.set(-8, 2, 0)
       entity.addComponents([new VelocityComponent(0.1, 0, 0)])
+      worldRef.current.eventManager.dispatch<ExternalEventPayload[ExternalEvent.TEST]>(ExternalEvent.TEST, { msg: '添加了一个运动立方体', time: Date.now() })
     }
   }, [])
 
   useEffect(() => {
-    if (containerRef.current) {
+    if (containerRef.current && !worldRef.current) {
       worldRef.current = new World(containerRef.current)
       worldRef.current.start()
-      SystemsManager.GetInstance().registerSystem(MoveSystem.GetInstance())
+      worldRef.current.eventManager.addEventListener(ExternalEvent.TEST, (payload: ExternalEventPayload[ExternalEvent.TEST]) => {
+        console.log('间隔 ' + (Date.now() - payload.time) + 'ms 之后收到消息:' + payload.msg)
+      })
     }
   }, [])
 

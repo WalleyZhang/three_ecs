@@ -1,6 +1,5 @@
-import { Component, Entity, System } from "../core/ecs";
-import { EntitiesManager } from "../managers/entitiesManager";
-import { SystemsManager } from "../managers/systemsManager";
+import { Component, System } from "core";
+import { EntitiesManager, SystemsManager } from "base";
 
 // 创建一个测试用的 Component 和 Entity
 export class TestComponent1 extends Component {
