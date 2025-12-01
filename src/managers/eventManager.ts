@@ -84,6 +84,27 @@ export class EventManager {
     this.eventListeners = {};
   }
 
+  /** 移除指定事件类型的所有监听器 */
+  public removeAllListeners(eventType?: ExternalEvent | InternalEvent): void {
+    if (eventType) {
+      delete this.eventListeners[eventType];
+    } else {
+      this.eventListeners = {};
+    }
+  }
+
+  /** 获取监听器数量 */
+  public getListenerCount(eventType?: ExternalEvent | InternalEvent): number {
+    if (eventType) {
+      return this.eventListeners[eventType]?.length || 0;
+    }
+    let total = 0;
+    Object.values(this.eventListeners).forEach(callbacks => {
+      total += callbacks.length;
+    });
+    return total;
+  }
+
   /** 触发事件 */
   private triggerEvent<T = any>(eventData: EventData<T>): void {
     const { type, payload } = eventData;

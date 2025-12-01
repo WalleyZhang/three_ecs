@@ -72,13 +72,29 @@ export class Entity extends Data {
     return components;
   }
 
-  /** 移除组件：todo 暂时不需要动态移除组件 */
-  public removeComponent<T extends Component>(component: T): boolean {
+
+  public removeComponents<T extends Component>(components: T[]): boolean {
+    const toBeRemoved: Component[] = [];
+    for (const component of components) {
+      if (
+        this.components.has(
+          (component.constructor as ComponentConstructor<T>).CompName
+        )
+      ) {
+        toBeRemoved.push(component);
+      }
+    }
     if (
-      this.components.has(
-        (component.constructor as ComponentConstructor<T>).CompName
-      )
+      toBeRemoved.length > 0
     ) {
+      Entity.eventM!.dispatch<InternalEventPayload[InternalEvent.ENTITY_COMPONENT_REMOVED]>(
+        InternalEvent.ENTITY_COMPONENT_REMOVED,
+        {
+          entity: this,
+          components: toBeRemoved
+        }
+      );
+      return true;
     }
     return false;
   }
@@ -102,7 +118,7 @@ export class Entity extends Data {
 /** 系统：处理实体上的组件 */
 export abstract class System {
 
-  /** 系统优先级（0-4 数据-物理-逻辑-动画-渲染）：越小越先更新，同级更新顺序不定 */
+  /** 系统优先级（0-49 数据-物理-逻辑-动画-渲染）：越小越先更新 */
   public abstract layer: number;
 
   /** 实体管理器实例，用于获取实体 */

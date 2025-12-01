@@ -24,6 +24,10 @@ export class EntitiesManager {
       InternalEvent.ENTITY_COMPONENT_ADDED,
       this.addComponentHandler
     );
+    EventManager.GetInstance().addEventListener(
+      InternalEvent.ENTITY_COMPONENT_REMOVED,
+      this.removeComponentHandler
+    );
   }
 
   public static GetInstance(): EntitiesManager {
@@ -93,8 +97,34 @@ export class EntitiesManager {
     return entities.size > 0 ? entities : undefined;
   }
 
-  /** 重置管理器 */
+  /** 获取所有活跃的实体 */
+  public getAllEntities(): Entity[] {
+    return this.entities.filter(entity => entity !== undefined) as Entity[];
+  }
+
+  /** 获取实体总数 */
+  public getEntityCount(): number {
+    return this.entities.filter(entity => entity !== undefined).length;
+  }
+
+  /** 获取拥有特定组件的实体数量 */
+  public getEntityCountWithComponent(compName: string): number {
+    return this.componentIndex.get(compName)?.size || 0;
+  }
+
+  /**
+   * 重置管理器，清理所有实体和索引
+   * 注意：此方法不会清理事件监听器，因为它们在构造函数中设置
+   */
   public reset() {
+    // 销毁所有实体
+    this.entities.forEach(entity => {
+      if (entity) {
+        // 标记实体为已销毁
+        entity.destroyed = true;
+      }
+    });
+
     this.entities = [];
     this.componentIndex = new Map();
   }
@@ -110,4 +140,16 @@ export class EntitiesManager {
       index.add(entity);
     }
   };
+
+  /** 实体删除组件处理器：箭头函数确保 this 指向正确 */
+  private removeComponentHandler = (payload: InternalEventPayload[InternalEvent.ENTITY_COMPONENT_REMOVED]) => {
+    const { entity, components } = payload;
+    for (const component of components) {
+      const compName = (
+        component.constructor as ComponentConstructor<Component>
+      ).CompName;
+      const index = this.componentIndex.get(compName);
+      index?.delete(entity);
+    }
+  }
 }

@@ -10,10 +10,16 @@ export class SystemsManager {
 
   public layer: number = -1;
 
+  /** 系统管理器状态 */
+  public get isRunning(): boolean { return this._isRunning; }
+  public get isPaused(): boolean { return this._isPaused; }
+
   /** 引擎运行时间（单位：毫秒） */
   private clock: number = 0;
   /** 两次 Update 之间的时间间隔（单位：毫秒） */
   private deltaTime: number = 0;
+  private _isRunning: boolean = false;
+  private _isPaused: boolean = false;
   private systems: Map<number, System[]> = new Map();
 
   private constructor() {
@@ -54,14 +60,25 @@ export class SystemsManager {
   }
 
   public Start(): void {
-    for (let i = 0; i <= 4; i++) {
+    if (this._isRunning) {
+      return;
+    }
+
+    for (let i = 0; i <= 49; i++) {
       const layerSystems = this.systems.get(i) || [];
       layerSystems.forEach((system) => {
         system.Start();
       });
     }
+
+    this._isRunning = true;
+    this._isPaused = false;
   }
   public Update(): void {
+    if (!this._isRunning || this._isPaused) {
+      return;
+    }
+
     // 首次更新先初始化
     if (this.clock === 0) {
       this.clock = Date.now();
@@ -79,21 +96,75 @@ export class SystemsManager {
       }
     }
   }
+
   public LatedUpdate(): void {
-    if (this.clock > 0) {
-      const sortedKeys = [...this.systems.keys()].sort((a, b) => a - b);
-      for (const key of sortedKeys) {
-        const layerSystems = this.systems.get(key)!;
-        layerSystems.forEach((system) => {
-          system.Update(this.deltaTime);
-        });
-      }
+    if (!this._isRunning || this._isPaused || this.clock <= 0) {
+      return;
+    }
+
+    const sortedKeys = [...this.systems.keys()].sort((a, b) => a - b);
+    for (const key of sortedKeys) {
+      const layerSystems = this.systems.get(key)!;
+      layerSystems.forEach((system) => {
+        system.LatedUpdate(this.deltaTime);
+      });
     }
   }
+
   public Pause(): void {
-    throw new Error("Method not implemented.");
+    if (!this._isRunning || this._isPaused) {
+      return;
+    }
+
+    this._isPaused = true;
   }
+
   public Stop(): void {
-    throw new Error("Method not implemented.");
+    if (!this._isRunning) {
+      return;
+    }
+
+    // 停止所有系统
+    const sortedKeys = [...this.systems.keys()].sort((a, b) => a - b);
+    for (const key of sortedKeys) {
+      const layerSystems = this.systems.get(key)!;
+      layerSystems.forEach((system) => {
+        system.Stop();
+      });
+    }
+
+    this._isRunning = false;
+    this._isPaused = false;
+    this.clock = 0;
+    this.deltaTime = 0;
+  }
+
+  /** 获取所有已注册的系统 */
+  public getAllSystems(): System[] {
+    const allSystems: System[] = [];
+    this.systems.forEach(layerSystems => {
+      allSystems.push(...layerSystems);
+    });
+    return allSystems;
+  }
+
+  /** 获取指定层级的系统 */
+  public getSystemsByLayer(layer: number): System[] {
+    return this.systems.get(layer) || [];
+  }
+
+  /** 获取系统总数 */
+  public getSystemCount(): number {
+    let count = 0;
+    this.systems.forEach(layerSystems => {
+      count += layerSystems.length;
+    });
+    return count;
+  }
+
+  /** 检查系统是否已注册 */
+  public hasSystem(system: System): boolean {
+    const layerSystems = this.systems.get(system.layer) || [];
+    return layerSystems.includes(system);
   }
 }

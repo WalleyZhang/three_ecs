@@ -21,6 +21,12 @@ type AddComponent = {
   compNames: string[];
 };
 
+type RemoveComponent = {
+  entity: Entity;
+  components: Component[];
+};
+
 export type InternalEventPayload = {
   [InternalEvent.ENTITY_COMPONENT_ADDED]: AddComponent;
+  [InternalEvent.ENTITY_COMPONENT_REMOVED]: RemoveComponent;
 };

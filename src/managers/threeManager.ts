@@ -1,6 +1,5 @@
-import { AmbientLight, Camera, Object3D, PerspectiveCamera, Scene, WebGLRenderer } from "three";
+import { AmbientLight, BackSide, Camera, Color, Mesh, MeshBasicMaterial, Object3D, PerspectiveCamera, Scene, ShaderMaterial, SphereGeometry, WebGLRenderer } from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
-import Stats from 'three/examples/jsm/libs/stats.module.js';
 import { SystemsManager } from "./systemsManager";
 
 /** 
@@ -54,6 +53,8 @@ export class ThreeManager {
     // 环境光
     const ambientLight = new AmbientLight(0xffffff, 0.5);
     this.scene.add(ambientLight);
+
+    this.addSkyBox();
   }
 
   /** 设置（启动） three 中的动画循环 */
@@ -116,5 +117,34 @@ export class ThreeManager {
     controls.rotateSpeed = 0.75;
     controls.target.set(0, 0, 0)
     return controls;
+  }
+
+  private addSkyBox() {
+    const skyGeo = new SphereGeometry(50000, 32, 32); // 大球体比立方体更自然
+    const skyMat = new ShaderMaterial({
+      side: BackSide,
+      uniforms: {
+        topColor: { value: new Color(0x4682b4) },   // 高空深蓝
+        bottomColor: { value: new Color(0xdeb887) }, // 地面土色
+      },
+      vertexShader: `
+        varying vec3 vPosition;
+        void main() {
+          vPosition = position;
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        }
+      `,
+      fragmentShader: `
+        varying vec3 vPosition;
+        uniform vec3 topColor;
+        uniform vec3 bottomColor;
+        void main() {
+          float h = normalize(vPosition).y * 0.5 + 0.5; // 把 y 归一化到 [0,1]
+          gl_FragColor = vec4(mix(bottomColor, topColor, h), 1.0);
+        }
+      `,
+    });
+    const skyBox = new Mesh(skyGeo, skyMat);
+    this.scene.add(skyBox);
   }
 }

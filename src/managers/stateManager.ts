@@ -1,4 +1,5 @@
 import { State } from "../types/state";
+
 /** word 的状态管理器，用于切换其状态 */
 export class StateManager {
   private static instance: StateManager;

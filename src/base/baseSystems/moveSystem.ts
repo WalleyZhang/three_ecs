@@ -7,7 +7,7 @@ export class MoveSystem extends System {
 
   private static instance: MoveSystem;
 
-  public layer: number = 1;
+  public layer: number = 15;
 
   public static GetInstance(): MoveSystem {
     if (!MoveSystem.instance) {
