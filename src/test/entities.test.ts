@@ -1,12 +1,12 @@
 import { Entity } from "../core/ecs";
 import { em, TestComponent1, TestComponent2 } from "./testData";
 
-describe("EntitiesManager 功能测试", () => {
+describe("EntitiesManager", () => {
   beforeEach(() => {
     em.reset();
   });
 
-  test("测试新增实体、依据组件查询实体", () => {
+  test("add entities and query by component", () => {
     const e1_1 = em.addEntity(new Entity());
     const e1_2 = em.addEntity(new Entity());
     e1_1.addComponents([new TestComponent1()]);

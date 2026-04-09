@@ -5,7 +5,7 @@ import { ExternalEvent } from "../types/externalEventMap";
 
 type EventCallback<T = any> = (payload: T) => void;
 
-/** 事件管理器：事件注册、触发 */
+/** Event manager singleton: listener registration, queued dispatch, and trigger */
 export class EventManager {
   private static instance: EventManager;
   public static GetInstance(): EventManager {
@@ -16,10 +16,8 @@ export class EventManager {
   }
 
   private eventListeners: { [key: string]: EventCallback[] } = {};
-  /** 事件队列：事件分发不会立刻执行，而是放入队列中，等待事件系统在下一帧执行 */
+  /** Event queue: dispatched events are not executed immediately but deferred until the EventSystem processes them next frame */
   private eventQueue: Queue<EventData> = new Queue();
-  /** 事件集合：用于验证事件是否支持 */
-  private eventMap = new Set([...Object.values(InternalEvent), ...Object.values(ExternalEvent)])
 
   private constructor() { }
 
@@ -27,6 +25,7 @@ export class EventManager {
     if (!this.eventListeners[eventType]) {
       this.eventListeners[eventType] = [];
     }
+    if (this.eventListeners[eventType].includes(callback)) return;
     this.eventListeners[eventType].push(callback);
   }
 
@@ -47,9 +46,9 @@ export class EventManager {
     this.addEventListener(eventType, onceCallback);
   }
 
-  /** 
-   * 事件触发：不应该在外部调用，只能由事件系统触发
-   * @param batchNumber 触发事件的数量，默认触发所有事件
+  /**
+   * Flush queued events. Should only be called by the EventSystem, not externally.
+   * @param batchNumber Max events to process. Negative value processes all.
    */
   public trigger(batchNumber: number = -1): void {
     if (batchNumber < 0) {
@@ -71,7 +70,7 @@ export class EventManager {
     }
   }
 
-  /** 事件分发：由外部调用，分发事件不会立刻执行，而是放入队列中，等待事件系统在下一帧执行 */
+  /** Enqueue an event for deferred processing by the EventSystem next frame */
   public dispatch<T>(eventType: ExternalEvent | InternalEvent, payload?: T): void {
     const eventData: EventData = {
       type: eventType,
@@ -84,7 +83,7 @@ export class EventManager {
     this.eventListeners = {};
   }
 
-  /** 移除指定事件类型的所有监听器 */
+  /** Remove all listeners, or all listeners for a specific event type */
   public removeAllListeners(eventType?: ExternalEvent | InternalEvent): void {
     if (eventType) {
       delete this.eventListeners[eventType];
@@ -93,7 +92,7 @@ export class EventManager {
     }
   }
 
-  /** 获取监听器数量 */
+  /** Get listener count, optionally filtered by event type */
   public getListenerCount(eventType?: ExternalEvent | InternalEvent): number {
     if (eventType) {
       return this.eventListeners[eventType]?.length || 0;
@@ -105,7 +104,7 @@ export class EventManager {
     return total;
   }
 
-  /** 触发事件 */
+  /** Execute all callbacks for a single event */
   private triggerEvent<T = any>(eventData: EventData<T>): void {
     const { type, payload } = eventData;
     const callbacks = this.eventListeners[type];

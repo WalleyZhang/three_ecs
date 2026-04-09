@@ -1,5 +1,5 @@
-/** 
- * 引擎内部的事件主题
+/**
+ * Internal engine event topics
  */
 
 import type { Component, Entity } from "../core";

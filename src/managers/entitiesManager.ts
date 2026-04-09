@@ -8,13 +8,13 @@ import { InternalEvent, InternalEventPayload } from "../types/internalEventMap";
 import { EventManager } from "./eventManager";
 
 /**
- * 管理所有实体的单例
+ * Singleton that manages all entities and their component index.
  */
 export class EntitiesManager {
   private static instance: EntitiesManager;
-  /** 所有实体：稀疏数组 */
+  /** All entities, stored as a sparse array indexed by entity ID */
   private entities: (Entity | undefined)[] = [];
-  /**固定的组件索引：用于快速定位拥有某个组件的实体*/
+  /** Component index: maps CompName to the set of entities that own it */
   private componentIndex: Map<string, Set<Entity>>;
 
   private constructor() {
@@ -37,10 +37,9 @@ export class EntitiesManager {
     return EntitiesManager.instance;
   }
 
-  /** 添加实体的唯一入口 */
+  /** Register an entity and index its existing components */
   public addEntity(entity: Entity): Entity {
     this.entities[entity.id] = entity;
-    // 记录组件索引，方便快速查询拥有某个组件的实体
     for (const component of entity.components) {
       const compName = (
         component.constructor as ComponentConstructor<Component>
@@ -54,11 +53,10 @@ export class EntitiesManager {
     return entity;
   }
 
-  /** 删除实体：若实体不存在，则返回 false */
+  /** Remove an entity and clean up its component index entries. Returns false if not found. */
   public removeEntity(e: Entity): boolean {
     const entity = this.entities[e.id];
     if (entity) {
-      // 先从组件索引中删除
       for (const component of entity.components) {
         const compName = (
           component.constructor as ComponentConstructor<Component>
@@ -66,7 +64,7 @@ export class EntitiesManager {
         const index = this.componentIndex.get(compName);
         index?.delete(entity);
       }
-      // 再从实体数组中删除
+      
       this.entities[entity.id] = undefined;
 
       return true;
@@ -74,53 +72,49 @@ export class EntitiesManager {
     return false;
   }
 
-  /** 获取有特定组件的实体列表 */
+  /** Get the set of entities that own all specified components */
   public getEntitiesWithComponent(
     compNames: string[]
   ): Set<Entity> | undefined {
     if (compNames.length === 0) {
       throw new EmptyError("compNames is empty");
     }
-    const entities = this.componentIndex.get(compNames[0]);
-    // 没有任何实体拥有该组件，直接返回
-    if (!entities || entities.size === 0) return undefined;
+    const first = this.componentIndex.get(compNames[0]);
+    if (!first || first.size === 0) return undefined;
+
+    const result = new Set(first);
     for (let i = 1; i < compNames.length; i++) {
       const index = this.componentIndex.get(compNames[i]);
-
       if (!index || index.size === 0) return undefined;
-      entities.forEach((entity) => {
-        if (!index.has(entity)) {
-          entities.delete(entity);
-        }
-      });
+      for (const entity of result) {
+        if (!index.has(entity)) result.delete(entity);
+      }
     }
-    return entities.size > 0 ? entities : undefined;
+    return result.size > 0 ? result : undefined;
   }
 
-  /** 获取所有活跃的实体 */
+  /** Get all active (non-removed) entities */
   public getAllEntities(): Entity[] {
     return this.entities.filter(entity => entity !== undefined) as Entity[];
   }
 
-  /** 获取实体总数 */
+  /** Get the total number of active entities */
   public getEntityCount(): number {
     return this.entities.filter(entity => entity !== undefined).length;
   }
 
-  /** 获取拥有特定组件的实体数量 */
+  /** Get the count of entities that own the specified component */
   public getEntityCountWithComponent(compName: string): number {
     return this.componentIndex.get(compName)?.size || 0;
   }
 
   /**
-   * 重置管理器，清理所有实体和索引
-   * 注意：此方法不会清理事件监听器，因为它们在构造函数中设置
+   * Reset the manager, destroying all entities and clearing the index.
+   * Event listeners set up in the constructor are intentionally preserved.
    */
   public reset() {
-    // 销毁所有实体
     this.entities.forEach(entity => {
       if (entity) {
-        // 标记实体为已销毁
         entity.destroyed = true;
       }
     });
@@ -129,7 +123,7 @@ export class EntitiesManager {
     this.componentIndex = new Map();
   }
 
-  /** 实体新增组件处理器：箭头函数确保 this 指向正确 */
+  /** Handler for component-added events (arrow fn to preserve `this`) */
   private addComponentHandler = (payload: InternalEventPayload[InternalEvent.ENTITY_COMPONENT_ADDED]) => {
     const { entity, compNames } = payload;
     for (const compName of compNames) {
@@ -141,7 +135,7 @@ export class EntitiesManager {
     }
   };
 
-  /** 实体删除组件处理器：箭头函数确保 this 指向正确 */
+  /** Handler for component-removed events (arrow fn to preserve `this`) */
   private removeComponentHandler = (payload: InternalEventPayload[InternalEvent.ENTITY_COMPONENT_REMOVED]) => {
     const { entity, components } = payload;
     for (const component of components) {

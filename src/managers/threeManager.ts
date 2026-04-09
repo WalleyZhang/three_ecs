@@ -1,20 +1,56 @@
-import { AmbientLight, BackSide, Camera, Color, Mesh, MeshBasicMaterial, Object3D, PerspectiveCamera, Scene, ShaderMaterial, SphereGeometry, WebGLRenderer } from "three";
-import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
+import {
+  AmbientLight, BackSide, Camera, Color, Mesh,
+  Object3D, PerspectiveCamera, Scene, ShaderMaterial,
+  SphereGeometry, WebGLRenderer
+} from "three";
+import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { SystemsManager } from "./systemsManager";
 
-/** 
- * three 场景管理器：单例模式
+export interface ThreeManagerOptions {
+  antialias?: boolean;
+  skybox?: boolean;
+  ambientLight?: { color: number; intensity: number } | false;
+  camera?: {
+    fov?: number;
+    near?: number;
+    far?: number;
+    position?: [number, number, number];
+    up?: [number, number, number];
+  };
+}
+
+const DEFAULT_OPTIONS: Required<ThreeManagerOptions> = {
+  antialias: false,
+  skybox: true,
+  ambientLight: { color: 0xffffff, intensity: 0.5 },
+  camera: {
+    fov: 35,
+    near: 1,
+    far: 50000,
+    position: [0, 0, 15],
+    up: [0, 0, 1],
+  },
+};
+
+/**
+ * Three.js scene manager singleton.
  */
 export class ThreeManager {
   private static instance: ThreeManager;
+  private static pendingOptions: ThreeManagerOptions = {};
+
+  /** Call before GetInstance() to configure the manager */
+  public static Configure(options: ThreeManagerOptions): void {
+    ThreeManager.pendingOptions = options;
+  }
+
   public static GetInstance(): ThreeManager {
     if (!ThreeManager.instance) {
-      ThreeManager.instance = new ThreeManager();
+      ThreeManager.instance = new ThreeManager(ThreeManager.pendingOptions);
     }
     return ThreeManager.instance;
   }
 
-  /** 自动调整渲染器尺寸和相机aspect以适配容器 */
   public set AutoResize(autoResize: boolean) {
     if (this.autoResize === autoResize || !this.container) return;
 
@@ -27,10 +63,14 @@ export class ThreeManager {
     this.resizeHandler();
   }
 
-  /** 场景所在的容器 */
   public set Container(container: HTMLElement) {
     this.container = container;
   }
+
+  public get Scene(): Scene { return this.scene; }
+  public get Camera(): Camera { return this.camera; }
+  public get Renderer(): WebGLRenderer { return this.renderer; }
+  public get Controls(): OrbitControls { return this.controls; }
 
   private autoResize: boolean = false;
   private container?: HTMLElement;
@@ -43,49 +83,54 @@ export class ThreeManager {
   private camera: Camera;
   private controls: OrbitControls;
 
-  private constructor() {
+  private constructor(opts: ThreeManagerOptions = {}) {
+    const options = { ...DEFAULT_OPTIONS, ...opts };
+    const cameraOpts = { ...DEFAULT_OPTIONS.camera, ...opts.camera };
+
     this.scene = new Scene();
-    // 默认不启用抗锯齿，以提高性能
-    this.renderer = new WebGLRenderer();
-    this.camera = this.createCamera();
+    this.renderer = new WebGLRenderer({ antialias: options.antialias });
+    this.camera = this.createCamera(cameraOpts);
     this.controls = this.createOrbitControls(this.camera, this.renderer.domElement);
 
-    // 环境光
-    const ambientLight = new AmbientLight(0xffffff, 0.5);
-    this.scene.add(ambientLight);
+    if (options.ambientLight !== false) {
+      const al = options.ambientLight as { color: number; intensity: number };
+      this.scene.add(new AmbientLight(al.color, al.intensity));
+    }
 
-    this.addSkyBox();
+    if (options.skybox) {
+      this.addSkyBox();
+    }
   }
 
-  /** 设置（启动） three 中的动画循环 */
   public setAnimationLoop() {
     if (!this.container) {
-      throw new Error('场景容器不存在');
+      throw new Error('Container is not set');
     }
     this.container.appendChild(this.renderer.domElement);
     const instance = SystemsManager.GetInstance();
-    instance.Start();
-    this.renderer.setAnimationLoop(() => {
-      instance.Update();
+    instance.start();
+    this.renderer.setAnimationLoop((time: DOMHighResTimeStamp) => {
+      instance.update(time);
       this.renderer.render(this.scene, this.camera);
-      instance.LatedUpdate();
+      instance.lateUpdate();
     });
   }
 
-  /** 取消（停止） three 中的动画循环 */
   public unsetAnimationLoop() {
     this.renderer.setAnimationLoop(null);
-    SystemsManager.GetInstance().Stop();
+    SystemsManager.GetInstance().stop();
   }
 
-  /** 模型添加到场景中 */
   public appendToScene(obj: Object3D) {
     if (obj.parent !== this.scene) {
       this.scene.add(obj);
     }
   }
 
-  /** 容器尺寸发生变化时，更新渲染器尺寸和相机的aspect以适配容器 */
+  public removeFromScene(obj: Object3D) {
+    this.scene.remove(obj);
+  }
+
   private setSize(container: HTMLElement) {
     this.renderer.setSize(container.clientWidth, container.clientHeight);
     this.renderer.setPixelRatio(window.devicePixelRatio);
@@ -96,36 +141,34 @@ export class ThreeManager {
     }
   }
 
-  /** 相机初始化 */
-  private createCamera(): Camera {
-    if (this.camera) return this.camera;
+  private createCamera(opts: Required<ThreeManagerOptions>['camera']): Camera {
     const camera = new PerspectiveCamera(
-      35,
+      opts.fov ?? 35,
       1,
-      1,
-      50000
+      opts.near ?? 1,
+      opts.far ?? 500
     );
-    camera.up.set(0, 0, 1);
-    camera.position.set(0, 0, 15);
+    const up = opts.up ?? [0, 0, 1];
+    const pos = opts.position ?? [0, 0, 15];
+    camera.up.set(up[0], up[1], up[2]);
+    camera.position.set(pos[0], pos[1], pos[2]);
     return camera;
   }
 
-  /** 相机控制器初始化 */
   private createOrbitControls(camera: Camera, canvas: HTMLElement): OrbitControls {
-    if (this.controls) return this.controls;
     const controls = new OrbitControls(camera, canvas);
     controls.rotateSpeed = 0.75;
-    controls.target.set(0, 0, 0)
+    controls.target.set(0, 0, 0);
     return controls;
   }
 
   private addSkyBox() {
-    const skyGeo = new SphereGeometry(50000, 32, 32); // 大球体比立方体更自然
+    const skyGeo = new SphereGeometry(ThreeManager.pendingOptions.camera?.far ?? 500, 32, 32);
     const skyMat = new ShaderMaterial({
       side: BackSide,
       uniforms: {
-        topColor: { value: new Color(0x4682b4) },   // 高空深蓝
-        bottomColor: { value: new Color(0xdeb887) }, // 地面土色
+        topColor: { value: new Color(0x4682b4) },
+        bottomColor: { value: new Color(0xdeb887) },
       },
       vertexShader: `
         varying vec3 vPosition;
@@ -139,12 +182,11 @@ export class ThreeManager {
         uniform vec3 topColor;
         uniform vec3 bottomColor;
         void main() {
-          float h = normalize(vPosition).y * 0.5 + 0.5; // 把 y 归一化到 [0,1]
+          float h = normalize(vPosition).y * 0.5 + 0.5;
           gl_FragColor = vec4(mix(bottomColor, topColor, h), 1.0);
         }
       `,
     });
-    const skyBox = new Mesh(skyGeo, skyMat);
-    this.scene.add(skyBox);
+    this.scene.add(new Mesh(skyGeo, skyMat));
   }
 }

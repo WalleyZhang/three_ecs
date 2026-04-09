@@ -1,10 +1,10 @@
 export enum State {
-  /** 场景配置 */
+  /** Scene configuration */
   CONFIG,
-  /** 场景运行 */
+  /** Scene running */
   RUNNING,
-  /** 场景暂停 */
+  /** Scene paused */
   PAUSE,
-  /** 开发模式 */
+  /** Debug mode */
   DEBUG
 }

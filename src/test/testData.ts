@@ -1,7 +1,7 @@
 import { Component, System } from "core";
 import { EntitiesManager, SystemsManager } from "base";
 
-// 创建一个测试用的 Component 和 Entity
+// Test fixtures: Component and System stubs
 export class TestComponent1 extends Component {
   public static CompName = "TestComponent1";
   public value: number = 0;
@@ -14,7 +14,7 @@ export class TestComponent2 extends Component {
 
 export class TestSystem1 extends System {
   public layer: number = 0;
-  /** 运行时间，从 0 开始 */
+  /** Accumulated run time, starts at 0 */
   public runTime: number = 0;
   public Start(): void { }
   public Update(delta: number): void {
@@ -26,7 +26,7 @@ export class TestSystem1 extends System {
 }
 export class TestSystem2 extends System {
   public layer: number = 0;
-  /** 运行时间，从 1 开始 */
+  /** Accumulated run time, starts at 1 */
   public runTime: number = 1;
   public Start(): void { }
   public Update(delta: number): void {

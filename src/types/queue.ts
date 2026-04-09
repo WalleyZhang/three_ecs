@@ -1,18 +1,18 @@
-/** 队列 */
+/** A simple FIFO queue backed by an object (GC-friendly, avoids array shift overhead) */
 export class Queue<T> {
-  /** 使用对象而非数组，使得GC机制对此数据生效 */
+  /** Object-based storage instead of array so deleted slots can be garbage-collected */
   private items: { [key: number]: T } = {};
   private head = 0;
   private tail = 0;
 
-  /** 队列限制 */
+  /** Maximum queue capacity */
   private maxLength: number;
-  /** 长度限制：默认 100 */
+  /** @param maxLength Capacity limit. Defaults to 100. */
   public constructor(maxLength: number = 100) {
     this.maxLength = maxLength;
   }
 
-  /** 入队 */
+  /** Enqueue an item. Silently drops if at capacity. */
   public enqueue(item: T): void {
     if (this.tail - this.head >= this.maxLength) {
       return;
@@ -21,7 +21,7 @@ export class Queue<T> {
     this.tail++;
   }
 
-  /** 出队 */
+  /** Dequeue and return the front item, or undefined if empty */
   public dequeue(): T | undefined {
     if (this.isEmpty()) return undefined;
     const item = this.items[this.head];
@@ -31,7 +31,7 @@ export class Queue<T> {
     return item;
   }
 
-  /** 获取队首元素 */
+  /** Peek at the front item without removing it */
   public peek(): T | undefined {
     return this.items[this.head];
   }

@@ -1,5 +1,5 @@
 /**
- * 自定义的错误类型
+ * Custom error types
  */
 
 export class AlreadyExistsError extends Error {

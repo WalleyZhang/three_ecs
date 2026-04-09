@@ -1,6 +1,6 @@
 import { Component } from "../../core";
 
-/** 速度组件 */
+/** Gravity component: applies gravitational acceleration to velocity */
 export class GravityComponent extends Component {
   public static CompName = "GravityComponent";
 

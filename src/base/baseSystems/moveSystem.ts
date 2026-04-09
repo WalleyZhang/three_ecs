@@ -1,30 +1,28 @@
-import { System } from "../../core";
+import { System } from "../../core"
 import { TransformComponent, VelocityComponent } from "../index"
 
+const TWO_PI = Math.PI * 2
 
-/** 控制模型的移动 */
 export class MoveSystem extends System {
 
-  private static instance: MoveSystem;
+  private static instance: MoveSystem
 
   public layer: number = 15;
 
   public static GetInstance(): MoveSystem {
     if (!MoveSystem.instance) {
-      MoveSystem.instance = new MoveSystem();
+      MoveSystem.instance = new MoveSystem()
     }
-    return MoveSystem.instance;
+    return MoveSystem.instance
   }
 
   private constructor() {
-    super();
+    super()
   }
 
-  public Start(): void {
-  }
+  public start(): void { }
 
-  /** 系统逻辑，目前只实现了 平移 */
-  public Update(delta: number): void {
+  public update(delta: number): void {
     const entities = this.entitiesM.getEntitiesWithComponent([VelocityComponent.CompName])?.values()
     if (!entities) return
     for (const entity of entities) {
@@ -35,14 +33,14 @@ export class MoveSystem extends System {
       transform.position.x += velocity.x * deltaS
       transform.position.y += velocity.y * deltaS
       transform.position.z += velocity.z * deltaS
+
+      transform.rotation.x = (transform.rotation.x + velocity.rx * deltaS) % TWO_PI
+      transform.rotation.y = (transform.rotation.y + velocity.ry * deltaS) % TWO_PI
+      transform.rotation.z = (transform.rotation.z + velocity.rz * deltaS) % TWO_PI
     }
-
   }
 
-  public LatedUpdate(): void {
-  }
-  public Pause(): void {
-  }
-  public Stop(): void {
-  }
+  public lateUpdate(): void { }
+  public pause(): void { }
+  public stop(): void { }
 }

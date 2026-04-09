@@ -1,6 +1,6 @@
 import { State } from "../types/state";
 
-/** word 的状态管理器，用于切换其状态 */
+/** World state manager singleton */
 export class StateManager {
   private static instance: StateManager;
   public static GetInstance(): StateManager {
@@ -11,11 +11,15 @@ export class StateManager {
   }
 
   private state: State = State.CONFIG;
+  public get State(): State {
+    return this.state;
+  }
+
   public set State(state: State) {
-    if (this.state == state) {
-      console.log("[StateManager] 状态切换无效：当前已经处于 " + state + " 状态");
+    if (this.state === state) {
       return;
     }
+    this.state = state;
   }
 
   private constructor() {

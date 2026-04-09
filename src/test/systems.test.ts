@@ -4,27 +4,27 @@ const delay = (ms: number): Promise<void> => {
   return new Promise((resolve) => setTimeout(resolve, ms));
 };
 
-describe("SystemsManager 功能测试", () => {
-  test("测试系统注册、更新、注销", async () => {
+describe("SystemsManager", () => {
+  test("register, update, and unregister systems", async () => {
     const system1 = new TestSystem1();
     const system2 = new TestSystem2();
     sm.registerSystem(system1);
     sm.registerSystem(system2);
-    // 首次更新会初始化数据不执行
+    // First update initialises internal state; no system tick
     sm.Update();
     await delay(100);
     sm.Update();
     const system1RunTime = system1.runTime;
     const system2RunTime = system2.runTime;
 
-    // 由于代码执行本身需要时间，所以无法直接判断 系统1 和 系统2 的运行时间，只能判断两者之间的差值
+    // Exact execution time varies, so compare the offset which should stay constant
     expect(system2RunTime - system1RunTime).toBe(1);
     sm.unregisterSystem(system1);
     await delay(100);
     sm.Update();
-    // 系统1注销后，运行时间不再更新
+    // After unregistering, system1 runtime should not change
     expect(system1.runTime).toBe(system1RunTime);
-    // 系统2运行时间更新
+    // system2 should have advanced
     expect(system2.runTime).toBeGreaterThan(system2RunTime);
   });
 });

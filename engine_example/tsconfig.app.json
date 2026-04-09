@@ -22,8 +22,6 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true,
 
-    /* 帮助 ts 在react中识别 engine 模块 */
-    "baseUrl": ".",
     "paths": {
       // 映射到主工程目录
       "@engine/*": ["../src/*"]

@@ -2,6 +2,8 @@ import { Component } from "../../core";
 import { Euler, Vector3 } from "three";
 
 export class TransformComponent extends Component {
+  public static CompName = "TransformComponent";
+
   public position: Vector3;
   public rotation: Euler;
   public scale: Vector3;
